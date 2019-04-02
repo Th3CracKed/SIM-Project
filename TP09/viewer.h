@@ -47,7 +47,12 @@ class Viewer : public QGLWidget {
   void createShaders();
   void enableShader(unsigned int shader=0);
   void enablePerlinShader();
+  void enableNormalShader();
   void disableShader();
+
+  void createFBO();
+  void deleteFBO();
+  void initFBO();
 
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentshader; // current shader index
@@ -63,11 +68,17 @@ class Viewer : public QGLWidget {
   std::vector<Shader *>    _shaders;           // all the shaders 
 
   //GLuint _vao;
-  //GLuint _buffers[3];
+  GLuint _buffers[1];
   GLuint _vaoTerrain;
   GLuint _vaoQuad;
   GLuint _terrain[2];
   GLuint _quad;
+
+
+  // render texture ids 
+  GLuint _noiseNormalId;
+  // fbo id
+  GLuint _fbo;
 };
 
 #endif // VIEWER_H

@@ -36,7 +36,8 @@ Viewer::~Viewer() {
     delete _shaders[i];
   }
 
-  deleteVAO();
+  deleteVAO(); 
+  deleteFBO();
 }
 
 void Viewer::createVAO() {
@@ -86,17 +87,12 @@ void Viewer::createShaders() {
   // Add your own shader files here 
   _vertexFilenames.push_back("shaders/noise.vert");
   _fragmentFilenames.push_back("shaders/noise.frag");
+
+    // Add your own shader files here 
+  _vertexFilenames.push_back("shaders/normal.vert");
+  _fragmentFilenames.push_back("shaders/normal.frag");
 }
 
-/*
-void Viewer::enableShader(unsigned int shader) {
-  // current shader ID 
-  GLuint id = _shaders[shader]->id(); 
-
-  // activate the current shader 
-  glUseProgram(id);
-}
-*/
 void Viewer::enablePerlinShader() {
   // current shader ID 
   GLuint id = _shaders[0]->id(); 
@@ -105,13 +101,28 @@ void Viewer::enablePerlinShader() {
   glUseProgram(id);
 }
 
+void Viewer::enableNormalShader() {
+  // current shader ID 
+  GLuint id = _shaders[1]->id(); 
+
+  // activate the current shader 
+  glUseProgram(id);
+
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+}
+
+
 void Viewer::disableShader() {
   // desactivate all shaders 
   glUseProgram(0);
 }
 
 void Viewer::paintGL() {
-  //glViewpoprt() TODO
+
+    glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+
   glViewport(0,0,800,800);
   
   // clear the color and depth buffers 
@@ -122,7 +133,15 @@ void Viewer::paintGL() {
 
   // actually draw the scene 
   drawVAO();
+    glBindFramebuffer(GL_FRAMEBUFFER,0);
+  glViewport(0,0,800,800);
 
+  // clear the color and depth buffers 
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  enableNormalShader();
+  
+  drawVAO();
   // tell the GPU to stop using this shader 
   disableShader();
 }
@@ -131,6 +150,35 @@ void Viewer::resizeGL(int width,int height) {
   //_cam->initialize(width,height,false);
   glViewport(0,0,width,height);
   updateGL();
+}
+
+void Viewer::createFBO() {
+  // Ids needed for the FBO and associated textures 
+  glGenFramebuffers(1,&_fbo);
+  glGenTextures(1,&_noiseNormalId);
+}
+
+void Viewer::initFBO() {
+
+  // create the texture for rendering normals 
+  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,800,800,0,GL_RGBA,GL_FLOAT,NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // attach textures to framebuffer object 
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_noiseNormalId,0);
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+
+void Viewer::deleteFBO() {
+  // delete all FBO Ids
+  glDeleteFramebuffers(1,&_fbo);
+  glDeleteTextures(1,&_noiseNormalId);
 }
 /*
 void Viewer::mousePressEvent(QMouseEvent *me) {
@@ -247,6 +295,10 @@ void Viewer::initializeGL() {
 
   // VAO creation 
   createVAO();
+
+  // create/init FBO
+  createFBO();
+  initFBO();
 
   // starts the timer 
   _timer->start();
