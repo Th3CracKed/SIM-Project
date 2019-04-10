@@ -22,7 +22,6 @@
 #include <stack>
 
 #include "camera.h"
-#include "meshLoader.h"
 #include "shader.h"
 #include "grid.h"
 
@@ -35,9 +34,9 @@ class Viewer : public QGLWidget {
   virtual void paintGL();
   virtual void initializeGL();
   virtual void resizeGL(int width,int height);
-  //virtual void keyPressEvent(QKeyEvent *ke);
-  //virtual void mousePressEvent(QMouseEvent *me);
-  //virtual void mouseMoveEvent(QMouseEvent *me);
+  virtual void keyPressEvent(QKeyEvent *ke);
+  virtual void mousePressEvent(QMouseEvent *me);
+  virtual void mouseMoveEvent(QMouseEvent *me);
 
  private:
   void createVAO();
@@ -57,10 +56,9 @@ class Viewer : public QGLWidget {
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentshader; // current shader index
 
-  //Mesh   *_mesh;   // the mesh
-  //Camera *_cam;    // the camera
+  Camera *_cam;    // the camera
   Grid *_grid;
-  //glm::vec3 _light; // light direction
+  glm::vec3 _light; // light direction
   bool      _mode;  // camera motion or light motion
 
   std::vector<std::string> _vertexFilenames;   // all vertex filenames

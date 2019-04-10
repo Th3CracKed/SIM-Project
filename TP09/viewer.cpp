@@ -2,7 +2,6 @@
 
 #include <math.h>
 #include <iostream>
-#include "meshLoader.h"
 #include <QTime>
 
 using namespace std;
@@ -13,24 +12,20 @@ Viewer::Viewer(const QGLFormat &format)
     _grid(new Grid()),
     _timer(new QTimer(this)),
     _currentshader(0),
-    //_light(glm::vec3(0,0,1)),
+    _light(glm::vec3(0,0,1)),
     _mode(false) {
 
   setlocale(LC_ALL,"C");
 
-  // load a mesh into the CPU memory
-  //_mesh = new Mesh(filename);
-
   // create a camera (automatically modify model/view matrices according to user interactions)
-  //_cam  = new Camera(_mesh->radius,glm::vec3(_mesh->center[0],_mesh->center[1],_mesh->center[2]));
+  _cam  = new Camera();
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
 
 Viewer::~Viewer() {
   delete _timer;
-  //delete _mesh;
-  //delete _cam;
+  delete _cam;
   delete _grid;
   for(unsigned int i=0;i<_shaders.size();++i) {
     delete _shaders[i];
@@ -99,6 +94,13 @@ void Viewer::enablePerlinShader() {
 
   // activate the current shader 
   glUseProgram(id);
+  
+  // send the model-view matrix 
+  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
+
+  // send the projection matrix 
+  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+
 }
 
 void Viewer::enableNormalShader() {
@@ -121,7 +123,7 @@ void Viewer::disableShader() {
 
 void Viewer::paintGL() {
 
-    glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
 
   glViewport(0,0,800,800);
   
@@ -133,7 +135,7 @@ void Viewer::paintGL() {
 
   // actually draw the scene 
   drawVAO();
-    glBindFramebuffer(GL_FRAMEBUFFER,0);
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
   glViewport(0,0,800,800);
 
   // clear the color and depth buffers 
@@ -147,7 +149,7 @@ void Viewer::paintGL() {
 }
 
 void Viewer::resizeGL(int width,int height) {
-  //_cam->initialize(width,height,false);
+  _cam->initialize(width,height,false);
   glViewport(0,0,width,height);
   updateGL();
 }
@@ -180,7 +182,7 @@ void Viewer::deleteFBO() {
   glDeleteFramebuffers(1,&_fbo);
   glDeleteTextures(1,&_noiseNormalId);
 }
-/*
+
 void Viewer::mousePressEvent(QMouseEvent *me) {
   const glm::vec2 p((float)me->x(),(float)(height()-me->y()));
 
@@ -217,8 +219,8 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
   
   updateGL();
 }
-*/
-/*
+
+
 void Viewer::keyPressEvent(QKeyEvent *ke) {
   
   // key a: play/stop animation
@@ -262,7 +264,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
 
   updateGL();
 }
-*/
+
 void Viewer::initializeGL() {
   // make this window the current one
   makeCurrent();
@@ -282,7 +284,7 @@ void Viewer::initializeGL() {
   glViewport(0,0,width(),height());
 
   // initialize camera
-  //_cam->initialize(width(),height(),true);
+  _cam->initialize(width(),height(),true);
 
   // load shader files
   createShaders();

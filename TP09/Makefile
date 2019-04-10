@@ -51,14 +51,12 @@ OBJECTS_DIR   = ./
 ####### Files
 
 SOURCES       = shader.cpp \
-		meshLoader.cpp \
 		trackball.cpp \
 		camera.cpp \
 		main.cpp \
 		viewer.cpp \
 		grid.cpp 
 OBJECTS       = shader.o \
-		meshLoader.o \
 		trackball.o \
 		camera.o \
 		main.o \
@@ -152,12 +150,10 @@ DIST          = /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/spec_pre.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/yacc.prf \
 		/usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/lex.prf \
 		main.pro shader.h \
-		meshLoader.h \
 		trackball.h \
 		camera.h \
 		viewer.h \
 		grid.h shader.cpp \
-		meshLoader.cpp \
 		trackball.cpp \
 		camera.cpp \
 		main.cpp \
@@ -376,8 +372,8 @@ distdir: FORCE
 	@test -d $(DISTDIR) || mkdir -p $(DISTDIR)
 	$(COPY_FILE) --parents $(DIST) $(DISTDIR)/
 	$(COPY_FILE) --parents /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp $(DISTDIR)/
-	$(COPY_FILE) --parents shader.h meshLoader.h trackball.h camera.h viewer.h grid.h $(DISTDIR)/
-	$(COPY_FILE) --parents shader.cpp meshLoader.cpp trackball.cpp camera.cpp main.cpp viewer.cpp grid.cpp $(DISTDIR)/
+	$(COPY_FILE) --parents shader.h trackball.h camera.h viewer.h grid.h $(DISTDIR)/
+	$(COPY_FILE) --parents shader.cpp trackball.cpp camera.cpp main.cpp viewer.cpp grid.cpp $(DISTDIR)/
 
 
 clean: compiler_clean 
@@ -428,9 +424,6 @@ compiler_clean: compiler_moc_predefs_clean
 shader.o: shader.cpp ../ext/glew-1.9.0/include/GL/glew.h \
 		shader.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o shader.o shader.cpp
-
-meshLoader.o: meshLoader.cpp meshLoader.h
-	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o meshLoader.o meshLoader.cpp
 
 trackball.o: trackball.cpp trackball.h \
 		vec2.h \
@@ -605,7 +598,6 @@ main.o: main.cpp viewer.h \
 		../ext/glm-0.9.4.1/glm/gtc/constants.inl \
 		../ext/glm-0.9.4.1/glm/gtc/quaternion.inl \
 		../ext/glm-0.9.4.1/glm/gtc/type_ptr.inl \
-		meshLoader.h \
 		shader.h \
 		grid.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o main.o main.cpp
@@ -692,7 +684,6 @@ viewer.o: viewer.cpp viewer.h \
 		../ext/glm-0.9.4.1/glm/gtc/constants.inl \
 		../ext/glm-0.9.4.1/glm/gtc/quaternion.inl \
 		../ext/glm-0.9.4.1/glm/gtc/type_ptr.inl \
-		meshLoader.h \
 		shader.h \
 		grid.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o viewer.o viewer.cpp
