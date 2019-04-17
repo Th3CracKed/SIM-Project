@@ -41,26 +41,26 @@ void Viewer::createVAO() {
   const GLfloat quadData[] = {
     -1.0f,-1.0f,0.0f, 1.0f,-1.0f,0.0f, -1.0f,1.0f,0.0f, -1.0f,1.0f,0.0f, 1.0f,-1.0f,0.0f, 1.0f,1.0f,0.0f };
 
-  glGenBuffers(2,_terrain);
-  glGenBuffers(1,&_quad);
-  glGenVertexArrays(1,&_vaoTerrain);
-  glGenVertexArrays(1,&_vaoQuad);
+  glGenBuffers(2,_terrain);//generate two buffers objects names
+  glGenBuffers(1,&_quad);//generate one buffer object name
+  glGenVertexArrays(1,&_vaoTerrain); //generate one vertex array object names
+  glGenVertexArrays(1,&_vaoQuad); //generate one vertex array object names
 
   // create the VBO associated with the grid (the terrain)
-  glBindVertexArray(_vaoTerrain);
-  glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // vertices
-  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);
-  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
-  glEnableVertexAttribArray(0);
-  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // indices
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);
+  glBindVertexArray(_vaoTerrain);//bind a vertex array object
+  glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // bind _terrain[0] to Vertex attributes (vertices)
+  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store 
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);//define an array of generic vertex attribute data
+  glEnableVertexAttribArray(0);//Enable a generic vertex attribute array
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // bind _terrain[1] to Vertex attributes (indices)
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store 
 
   // create the VBO associated with the screen quad
-  glBindVertexArray(_vaoQuad);
-  glBindBuffer(GL_ARRAY_BUFFER,_quad); // vertices
-  glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);
-  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);
-  glEnableVertexAttribArray(0);
+  glBindVertexArray(_vaoQuad);//bind a vertex array object
+  glBindBuffer(GL_ARRAY_BUFFER,_quad); // bind _quad to Vertex attributes (vertices)
+  glBufferData(GL_ARRAY_BUFFER, sizeof(quadData),quadData,GL_STATIC_DRAW);//creates and initializes a buffer object's data store
+  glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);//define an array of generic vertex attribute data
+  glEnableVertexAttribArray(0);//Disable a generic vertex attribute array
 }
 
 void Viewer::deleteVAO() {
@@ -74,7 +74,7 @@ void Viewer::drawVAO() {
   // Draw the 2 triangles !
   glBindVertexArray(_vaoQuad);
   glDrawArrays(GL_TRIANGLES,0,6);
-  glBindVertexArray(0);
+  glBindVertexArray(0);//disable vertex array
 }
 
 void Viewer::createShaders() {
@@ -86,33 +86,82 @@ void Viewer::createShaders() {
     // Add your own shader files here 
   _vertexFilenames.push_back("shaders/normal.vert");
   _fragmentFilenames.push_back("shaders/normal.frag");
+
+      // Add your own shader files here 
+  _vertexFilenames.push_back("shaders/third.vert");
+  _fragmentFilenames.push_back("shaders/third.frag");
+
+    // *** Phong shader TODO*** 
+  //_vertexFilenames.push_back("shaders/phong.vert");
+  //_fragmentFilenames.push_back("shaders/phong.frag");
 }
 
 void Viewer::enablePerlinShader() {
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
   // current shader ID 
   GLuint id = _shaders[0]->id(); 
 
   // activate the current shader 
   glUseProgram(id);
-  
-  // send the model-view matrix 
-  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
 
-  // send the projection matrix 
-  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1,bufferlist);
 
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  // actually draw the scene 
+  drawVAO();
+
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 void Viewer::enableNormalShader() {
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
   // current shader ID 
   GLuint id = _shaders[1]->id(); 
 
   // activate the current shader 
   glUseProgram(id);
+  
+  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT1};
+  glDrawBuffers(1,bufferlist);    
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
+  drawVAO();
+
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
+}
+
+
+void Viewer::enableThridShader() {
+  // current shader ID 
+  GLuint id = _shaders[2]->id(); 
+
+  // activate the current shader 
+  glUseProgram(id);
+
+    // send the model-view matrix 
+  glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
+
+  // send the projection matrix 
+  glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
+  
+  glActiveTexture(GL_TEXTURE0);//select active texture unit
+  glBindTexture(GL_TEXTURE_2D,_noisePerlinId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
   glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
+  glActiveTexture(GL_TEXTURE1);//select active texture unit
+  glBindTexture(GL_TEXTURE_2D,_normalId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
+  glUniform1i(glGetUniformLocation(id,"normalmap"),1);
+
+  glBindVertexArray(_vaoTerrain);
+  glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
+
+  // send the normal matrix (inverse( transpose( top-left 3x3(MDV)))  TODO
+  //glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
+
+  // send a light direction (defined in camera space) TODO
+  //glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
 }
 
 
@@ -123,27 +172,27 @@ void Viewer::disableShader() {
 
 void Viewer::paintGL() {
 
-  glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-
   glViewport(0,0,800,800);
   
-  // clear the color and depth buffers 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glDisable(GL_DEPTH_TEST);
+  glDepthMask(GL_FALSE);
 
   // tell the GPU to use this specified shader and send custom variables (matrices and others)
   enablePerlinShader();
 
-  // actually draw the scene 
-  drawVAO();
-  glBindFramebuffer(GL_FRAMEBUFFER,0);
+  enableNormalShader();
+  
   glViewport(0,0,800,800);
+  glEnable(GL_DEPTH_TEST);
+  glDepthMask(GL_TRUE);
 
   // clear the color and depth buffers 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  enableNormalShader();
+  enableThridShader();
   
   drawVAO();
+
   // tell the GPU to stop using this shader 
   disableShader();
 }
@@ -157,13 +206,22 @@ void Viewer::resizeGL(int width,int height) {
 void Viewer::createFBO() {
   // Ids needed for the FBO and associated textures 
   glGenFramebuffers(1,&_fbo);
-  glGenTextures(1,&_noiseNormalId);
+  glGenTextures(1,&_noisePerlinId);
+  glGenTextures(1,&_normalId);
 }
 
 void Viewer::initFBO() {
 
   // create the texture for rendering normals 
-  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
+  glBindTexture(GL_TEXTURE_2D,_noisePerlinId);
+  glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,800,800,0,GL_RGBA,GL_FLOAT,NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+
+  glBindTexture(GL_TEXTURE_2D,_normalId);
   glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,800,800,0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
@@ -172,15 +230,21 @@ void Viewer::initFBO() {
 
     // attach textures to framebuffer object 
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-  glBindTexture(GL_TEXTURE_2D,_noiseNormalId);
-  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_noiseNormalId,0);
+
+  glBindTexture(GL_TEXTURE_2D,_noisePerlinId);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_noisePerlinId,0);
+
+  glBindTexture(GL_TEXTURE_2D,_normalId);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_normalId,0);
+
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 void Viewer::deleteFBO() {
   // delete all FBO Ids
   glDeleteFramebuffers(1,&_fbo);
-  glDeleteTextures(1,&_noiseNormalId);
+  glDeleteTextures(1,&_noisePerlinId);
+  glDeleteTextures(1,&_normalId);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *me) {
