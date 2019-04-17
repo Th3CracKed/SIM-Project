@@ -268,7 +268,7 @@ void Viewer::createTextures(){
 
     glGenTextures(1,&_montagneTextu);
 
-    loadTexture(_montagneTextu, "textures/mountains-texture.jpg");
+    loadTexture(_montagneTextu, "textures/mountains-texture.png");
 }
 
 void Viewer::deleteTextures(){
