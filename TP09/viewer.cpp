@@ -18,7 +18,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera();
+  _cam  = new Camera(15,glm::vec3(0.0f, 0.7f, 0.5f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
