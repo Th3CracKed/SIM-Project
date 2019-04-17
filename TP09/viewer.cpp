@@ -155,8 +155,16 @@ void Viewer::enableThridShader() {
   glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
   glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D,_snowTextu);
+  glUniform1i(glGetUniformLocation(id, "snowTextu"), 2); 
+
+  glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D,_montagneTextu);
-  glUniform1i(glGetUniformLocation(id, "montagneTextu"), 2); 
+  glUniform1i(glGetUniformLocation(id, "montagneTextu"), 3); 
+
+    glActiveTexture(GL_TEXTURE4);
+  glBindTexture(GL_TEXTURE_2D,_grassTextu);
+  glUniform1i(glGetUniformLocation(id, "grassTextu"), 4); 
   
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
@@ -243,8 +251,21 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_normalId);
 }
 
+void Viewer::createTextures(){
+
+    glGenTextures(1,&_snowTextu);
+    loadTexture(_snowTextu, "textures/snow.jpg");
+
+    glGenTextures(1,&_montagneTextu);
+    loadTexture(_montagneTextu, "textures/mountains-texture.png");
+
+
+    glGenTextures(1,&_grassTextu);
+    loadTexture(_grassTextu, "textures/grass.jpg");
+}
+
 void Viewer::loadTexture(GLuint id,const char *filename) {
-    // load image 
+    // load image (CPU side)
     QImage image = QGLWidget::convertToGLFormat(QImage(filename));
 
     // activate texture 
@@ -256,7 +277,7 @@ void Viewer::loadTexture(GLuint id,const char *filename) {
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
     glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
 
-    // store texture in the GPU
+    // transfer data from CPU to GPU memory
     glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
            GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
 
@@ -264,15 +285,10 @@ void Viewer::loadTexture(GLuint id,const char *filename) {
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
-void Viewer::createTextures(){
-
-    glGenTextures(1,&_montagneTextu);
-
-    loadTexture(_montagneTextu, "textures/mountains-texture.png");
-}
-
 void Viewer::deleteTextures(){
+    glDeleteTextures(1,&_snowTextu);
     glDeleteTextures(1,&_montagneTextu);
+    glDeleteTextures(1,&_grassTextu);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *me) {

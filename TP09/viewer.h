@@ -77,8 +77,10 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
+  GLuint _snowTextu;
   GLuint _montagneTextu;
-
+  GLuint _grassTextu;
+  
   // render texture ids 
   GLuint _noisePerlinId;
   GLuint _normalId;
