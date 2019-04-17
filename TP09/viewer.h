@@ -54,6 +54,10 @@ class Viewer : public QGLWidget {
   void deleteFBO();
   void initFBO();
 
+  void createTextures();
+  void loadTexture(GLuint id,const char *filename);
+  void deleteTextures();
+
   QTimer        *_timer;    // timer that controls the animation
   unsigned int   _currentshader; // current shader index
 
@@ -73,6 +77,7 @@ class Viewer : public QGLWidget {
   GLuint _terrain[2];
   GLuint _quad;
 
+  GLuint _montagneTextu;
 
   // render texture ids 
   GLuint _noisePerlinId;

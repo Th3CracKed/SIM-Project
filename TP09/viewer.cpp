@@ -33,6 +33,7 @@ Viewer::~Viewer() {
 
   deleteVAO(); 
   deleteFBO();
+  deleteTextures();
 }
 
 void Viewer::createVAO() {
@@ -106,7 +107,6 @@ void Viewer::enablePerlinShader() {
 
   glClear(GL_COLOR_BUFFER_BIT);
 
-
   // actually draw the scene 
   drawVAO();
 
@@ -153,6 +153,10 @@ void Viewer::enableThridShader() {
   glActiveTexture(GL_TEXTURE1);//select active texture unit
   glBindTexture(GL_TEXTURE_2D,_normalId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
   glUniform1i(glGetUniformLocation(id,"normalmap"),1);
+
+  glActiveTexture(GL_TEXTURE2);
+  glBindTexture(GL_TEXTURE_2D,_montagneTextu);
+  glUniform1i(glGetUniformLocation(id, "montagneTextu"), 2); 
   
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
@@ -237,6 +241,38 @@ void Viewer::deleteFBO() {
   glDeleteFramebuffers(1,&_fbo);
   glDeleteTextures(1,&_noisePerlinId);
   glDeleteTextures(1,&_normalId);
+}
+
+void Viewer::loadTexture(GLuint id,const char *filename) {
+    // load image 
+    QImage image = QGLWidget::convertToGLFormat(QImage(filename));
+
+    // activate texture 
+    glBindTexture(GL_TEXTURE_2D,id);
+
+    // set texture parameters 
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); 
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+
+    // store texture in the GPU
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
+           GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
+
+    // generate mipmaps 
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void Viewer::createTextures(){
+
+    glGenTextures(1,&_montagneTextu);
+
+    loadTexture(_montagneTextu, "textures/mountains-texture.jpg");
+}
+
+void Viewer::deleteTextures(){
+    glDeleteTextures(1,&_montagneTextu);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *me) {
@@ -353,6 +389,7 @@ void Viewer::initializeGL() {
 
   // VAO creation 
   createVAO();
+  createTextures();
 
   // create/init FBO
   createFBO();
