@@ -106,6 +106,7 @@ void Viewer::enablePerlinShader() {
 
   glClear(GL_COLOR_BUFFER_BIT);
 
+
   // actually draw the scene 
   drawVAO();
 
@@ -123,14 +124,13 @@ void Viewer::enableNormalShader() {
 
   // activate the current shader 
   glUseProgram(id);
-  
+
+  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT1};
+  glDrawBuffers(1,bufferlist);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   drawVAO();
-
-  glActiveTexture(GL_TEXTURE1);//select active texture unit
-  glBindTexture(GL_TEXTURE_2D,_normalId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
-  glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
@@ -148,15 +148,12 @@ void Viewer::enableThridShader() {
 
   // send the projection matrix 
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
-  
-  glActiveTexture(GL_TEXTURE0);//select active texture unit
-  glBindTexture(GL_TEXTURE_2D,_noisePerlinId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
-  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
+
 
   glActiveTexture(GL_TEXTURE1);//select active texture unit
   glBindTexture(GL_TEXTURE_2D,_normalId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
   glUniform1i(glGetUniformLocation(id,"normalmap"),1);
-
+  
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
 
@@ -178,9 +175,9 @@ void Viewer::paintGL() {
   glViewport(0,0,800,800);
 
   // tell the GPU to use this specified shader and send custom variables (matrices and others)
-  //enablePerlinShader();
+  enablePerlinShader();
 
-  //enableNormalShader();
+  enableNormalShader();
   
   // clear the color and depth buffers 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
