@@ -104,13 +104,14 @@ void Viewer::enablePerlinShader() {
   // activate the current shader 
   glUseProgram(id);
 
-  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1,bufferlist);
-
   glClear(GL_COLOR_BUFFER_BIT);
 
   // actually draw the scene 
   drawVAO();
+
+  glActiveTexture(GL_TEXTURE0);//select active texture unit
+  glBindTexture(GL_TEXTURE_2D,_noisePerlinId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
+  glUniform1i(glGetUniformLocation(id,"heightmap"),0);
 
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
@@ -123,11 +124,13 @@ void Viewer::enableNormalShader() {
   // activate the current shader 
   glUseProgram(id);
   
-  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT1};
-  glDrawBuffers(1,bufferlist);    
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   drawVAO();
+
+  glActiveTexture(GL_TEXTURE1);//select active texture unit
+  glBindTexture(GL_TEXTURE_2D,_normalId);//bind a named texture to a texturing target (bound to GL_TEXTURE_2D becomes two-dimensional texture)
+  glUniform1i(glGetUniformLocation(id,"normalmap"),1);
 
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
@@ -175,18 +178,15 @@ void Viewer::paintGL() {
   glViewport(0,0,800,800);
 
   // tell the GPU to use this specified shader and send custom variables (matrices and others)
-  enablePerlinShader();
+  //enablePerlinShader();
 
-  enableNormalShader();
+  //enableNormalShader();
   
-  glViewport(0,0,800,800);
-
   // clear the color and depth buffers 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   enableThridShader();
   
-  drawVAO();
 
   // tell the GPU to stop using this shader 
   disableShader();
