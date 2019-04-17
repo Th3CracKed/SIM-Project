@@ -48,7 +48,10 @@ class Viewer : public QGLWidget {
   void enablePerlinShader();
   void enableNormalShader();
   void enableThirdShader();
+  void enableForthShader();
   void disableShader();
+
+  void drawObject(const glm::vec3 &pos,const glm::vec3 &col);
 
   void createFBO();
   void deleteFBO();
@@ -84,8 +87,11 @@ class Viewer : public QGLWidget {
   // render texture ids
   GLuint _noisePerlinId;
   GLuint _normalId;
+  GLuint _rendDepthId;
+  GLuint _rendColorId;
   // fbo id
   GLuint _fbo;
+  GLuint _fbo2;
 };
 
 #endif // VIEWER_H

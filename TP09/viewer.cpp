@@ -18,7 +18,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera(15,glm::vec3(0.0f, 0.7f, 0.5f));
+  _cam  = new Camera();
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
@@ -92,9 +92,9 @@ void Viewer::createShaders() {
   _vertexFilenames.push_back("shaders/displace.vert");
   _fragmentFilenames.push_back("shaders/displace.frag");
 
-    // *** Phong shader TODO***
-  //_vertexFilenames.push_back("shaders/phong.vert");
-  //_fragmentFilenames.push_back("shaders/phong.frag");
+        // Add your own shader files here
+  _vertexFilenames.push_back("shaders/forth.vert");
+  _fragmentFilenames.push_back("shaders/forth.frag");
 }
 
 void Viewer::enablePerlinShader() {
@@ -125,8 +125,7 @@ void Viewer::enableNormalShader() {
   // activate the current shader
   glUseProgram(id);
 
-  GLenum bufferlist [] = {GL_COLOR_ATTACHMENT1};
-  glDrawBuffers(1,bufferlist);
+  glDrawBuffer(GL_COLOR_ATTACHMENT1);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -162,7 +161,7 @@ void Viewer::enableThirdShader() {
   glBindTexture(GL_TEXTURE_2D,_montagneTextu);
   glUniform1i(glGetUniformLocation(id, "montagneTextu"), 3);
 
-    glActiveTexture(GL_TEXTURE4);
+  glActiveTexture(GL_TEXTURE4);
   glBindTexture(GL_TEXTURE_2D,_grassTextu);
   glUniform1i(glGetUniformLocation(id, "grassTextu"), 4);
 
@@ -175,6 +174,35 @@ void Viewer::enableThirdShader() {
   // send a light direction (defined in camera space) TODO
   glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
 
+}
+
+void Viewer::drawObject(const glm::vec3 &pos,const glm::vec3 &col) {
+  // shader id
+  GLuint id = _shaders[3]->id();
+
+  glUniform3fv(glGetUniformLocation(id,"color"),1,&(col[0]));
+}
+
+void Viewer::enableForthShader() {
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo2);
+  // current shader ID
+  GLuint id = _shaders[3]->id();
+
+  // activate the current shader
+  glUseProgram(id);
+
+  // send textures
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D,_rendColorId);
+  glUniform1i(glGetUniformLocation(id,"colormap"),0);
+
+  glActiveTexture(GL_TEXTURE1);
+  glBindTexture(GL_TEXTURE_2D,_normalId);
+  glUniform1i(glGetUniformLocation(id,"normalmap"),1);
+
+  drawVAO();
+
+  glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
 
@@ -197,6 +225,15 @@ void Viewer::paintGL() {
 
   enableThirdShader();
 
+    // draw multiple objects 
+  const int   v = 5;
+  for(int i=-v;i<=v;++i) {
+    for(int j=-v;j<=v;++j) {
+      drawObject(glm::vec3(i,0,j),glm::vec3((float)(i+v)/(float)(2*v+1),0.5,(float)(j+v)/(float)(2*v+1)));
+    }
+  }
+
+  enableForthShader();
 
   // tell the GPU to stop using this shader
   disableShader();
@@ -213,6 +250,8 @@ void Viewer::createFBO() {
   glGenFramebuffers(1,&_fbo);
   glGenTextures(1,&_noisePerlinId);
   glGenTextures(1,&_normalId);
+  glGenFramebuffers(1,&_fbo2);
+  glGenTextures(1,&_rendDepthId); //Déclaration d'une texture
 }
 
 void Viewer::initFBO() {
@@ -233,6 +272,13 @@ void Viewer::initFBO() {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
+  glBindTexture(GL_TEXTURE_2D,_rendDepthId);
+  glTexImage2D(GL_TEXTURE_2D,0,GL_DEPTH_COMPONENT24,800,800,0,GL_DEPTH_COMPONENT,GL_FLOAT,NULL);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     // attach textures to framebuffer object
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
 
@@ -242,6 +288,9 @@ void Viewer::initFBO() {
   glBindTexture(GL_TEXTURE_2D,_normalId);
   glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT1,GL_TEXTURE_2D,_normalId,0);
 
+  glBindFramebuffer(GL_FRAMEBUFFER,_fbo2);
+  glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,_rendDepthId,0);
+
   glBindFramebuffer(GL_FRAMEBUFFER,0);
 }
 
@@ -250,6 +299,7 @@ void Viewer::deleteFBO() {
   glDeleteFramebuffers(1,&_fbo);
   glDeleteTextures(1,&_noisePerlinId);
   glDeleteTextures(1,&_normalId);
+  glDeleteTextures(1,&_rendDepthId);
 }
 
 void Viewer::loadTexture(GLuint id,const char *filename) {
