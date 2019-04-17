@@ -89,8 +89,8 @@ void Viewer::createShaders() {
   _fragmentFilenames.push_back("shaders/normal.frag");
 
       // Add your own shader files here 
-  _vertexFilenames.push_back("shaders/third.vert");
-  _fragmentFilenames.push_back("shaders/third.frag");
+  _vertexFilenames.push_back("shaders/displace.vert");
+  _fragmentFilenames.push_back("shaders/displace.frag");
 
     // *** Phong shader TODO*** 
   //_vertexFilenames.push_back("shaders/phong.vert");
