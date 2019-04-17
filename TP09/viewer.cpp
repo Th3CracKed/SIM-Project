@@ -173,9 +173,6 @@ void Viewer::disableShader() {
 void Viewer::paintGL() {
 
   glViewport(0,0,800,800);
-  
-  glDisable(GL_DEPTH_TEST);
-  glDepthMask(GL_FALSE);
 
   // tell the GPU to use this specified shader and send custom variables (matrices and others)
   enablePerlinShader();
@@ -183,8 +180,6 @@ void Viewer::paintGL() {
   enableNormalShader();
   
   glViewport(0,0,800,800);
-  glEnable(GL_DEPTH_TEST);
-  glDepthMask(GL_TRUE);
 
   // clear the color and depth buffers 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
