@@ -5,8 +5,6 @@ uniform sampler2D heightmap;
 
 in vec2 texcoord;
 
-layout(location = 1) out vec4 outNormal;
-
 float value(in vec4 c) {
 
 // gradient of what:
@@ -39,5 +37,4 @@ vec3 n = normalize(cross(n1,n2));
 
 outBuffer = vec4(n,value(texture(heightmap,texcoord)));
     
-outNormal = outBuffer;
 }
