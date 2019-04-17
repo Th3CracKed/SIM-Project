@@ -18,7 +18,7 @@ Viewer::Viewer(const QGLFormat &format)
   setlocale(LC_ALL,"C");
 
   // create a camera (automatically modify model/view matrices according to user interactions)
-  _cam  = new Camera();
+  _cam  = new Camera(15,glm::vec3(0.0f, 0.7f, 0.5f));
   _timer->setInterval(10);
   connect(_timer,SIGNAL(timeout()),this,SLOT(updateGL()));
 }
@@ -31,7 +31,7 @@ Viewer::~Viewer() {
     delete _shaders[i];
   }
 
-  deleteVAO(); 
+  deleteVAO();
   deleteFBO();
   deleteTextures();
 }
@@ -50,11 +50,11 @@ void Viewer::createVAO() {
   // create the VBO associated with the grid (the terrain)
   glBindVertexArray(_vaoTerrain);//bind a vertex array object
   glBindBuffer(GL_ARRAY_BUFFER,_terrain[0]); // bind _terrain[0] to Vertex attributes (vertices)
-  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store 
+  glBufferData(GL_ARRAY_BUFFER,_grid->nbVertices()*3*sizeof(float),_grid->vertices(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store
   glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,0,(void *)0);//define an array of generic vertex attribute data
   glEnableVertexAttribArray(0);//Enable a generic vertex attribute array
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,_terrain[1]); // bind _terrain[1] to Vertex attributes (indices)
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store 
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER,_grid->nbFaces()*3*sizeof(int),_grid->faces(),GL_STATIC_DRAW);//creates and initializes a buffer object's data store
 
   // create the VBO associated with the screen quad
   glBindVertexArray(_vaoQuad);//bind a vertex array object
@@ -80,34 +80,34 @@ void Viewer::drawVAO() {
 
 void Viewer::createShaders() {
 
-  // Add your own shader files here 
+  // Add your own shader files here
   _vertexFilenames.push_back("shaders/noise.vert");
   _fragmentFilenames.push_back("shaders/noise.frag");
 
-    // Add your own shader files here 
+    // Add your own shader files here
   _vertexFilenames.push_back("shaders/normal.vert");
   _fragmentFilenames.push_back("shaders/normal.frag");
 
-      // Add your own shader files here 
+      // Add your own shader files here
   _vertexFilenames.push_back("shaders/displace.vert");
   _fragmentFilenames.push_back("shaders/displace.frag");
 
-    // *** Phong shader TODO*** 
+    // *** Phong shader TODO***
   //_vertexFilenames.push_back("shaders/phong.vert");
   //_fragmentFilenames.push_back("shaders/phong.frag");
 }
 
 void Viewer::enablePerlinShader() {
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-  // current shader ID 
-  GLuint id = _shaders[0]->id(); 
+  // current shader ID
+  GLuint id = _shaders[0]->id();
 
-  // activate the current shader 
+  // activate the current shader
   glUseProgram(id);
 
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // actually draw the scene 
+  // actually draw the scene
   drawVAO();
 
   glActiveTexture(GL_TEXTURE0);//select active texture unit
@@ -119,10 +119,10 @@ void Viewer::enablePerlinShader() {
 
 void Viewer::enableNormalShader() {
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
-  // current shader ID 
-  GLuint id = _shaders[1]->id(); 
+  // current shader ID
+  GLuint id = _shaders[1]->id();
 
-  // activate the current shader 
+  // activate the current shader
   glUseProgram(id);
 
   GLenum bufferlist [] = {GL_COLOR_ATTACHMENT1};
@@ -136,17 +136,17 @@ void Viewer::enableNormalShader() {
 }
 
 
-void Viewer::enableThridShader() {
-  // current shader ID 
-  GLuint id = _shaders[2]->id(); 
+void Viewer::enableThirdShader() {
+  // current shader ID
+  GLuint id = _shaders[2]->id();
 
-  // activate the current shader 
+  // activate the current shader
   glUseProgram(id);
 
-    // send the model-view matrix 
+    // send the model-view matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"mdvMat"),1,GL_FALSE,&(_cam->mdvMatrix()[0][0]));
 
-  // send the projection matrix 
+  // send the projection matrix
   glUniformMatrix4fv(glGetUniformLocation(id,"projMat"),1,GL_FALSE,&(_cam->projMatrix()[0][0]));
 
 
@@ -156,29 +156,30 @@ void Viewer::enableThridShader() {
 
   glActiveTexture(GL_TEXTURE2);
   glBindTexture(GL_TEXTURE_2D,_snowTextu);
-  glUniform1i(glGetUniformLocation(id, "snowTextu"), 2); 
+  glUniform1i(glGetUniformLocation(id, "snowTextu"), 2);
 
   glActiveTexture(GL_TEXTURE3);
   glBindTexture(GL_TEXTURE_2D,_montagneTextu);
-  glUniform1i(glGetUniformLocation(id, "montagneTextu"), 3); 
+  glUniform1i(glGetUniformLocation(id, "montagneTextu"), 3);
 
     glActiveTexture(GL_TEXTURE4);
   glBindTexture(GL_TEXTURE_2D,_grassTextu);
-  glUniform1i(glGetUniformLocation(id, "grassTextu"), 4); 
-  
+  glUniform1i(glGetUniformLocation(id, "grassTextu"), 4);
+
   glBindVertexArray(_vaoTerrain);
   glDrawElements(GL_TRIANGLES,3*_grid->nbFaces(),GL_UNSIGNED_INT,(void *)0);
 
   // send the normal matrix (inverse( transpose( top-left 3x3(MDV)))  TODO
-  //glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
+  glUniformMatrix3fv(glGetUniformLocation(id,"normalMat"),1,GL_FALSE,&(_cam->normalMatrix()[0][0]));
 
   // send a light direction (defined in camera space) TODO
-  //glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
+  glUniform3fv(glGetUniformLocation(id,"light"),1,&(_light[0]));
+
 }
 
 
 void Viewer::disableShader() {
-  // desactivate all shaders 
+  // desactivate all shaders
   glUseProgram(0);
 }
 
@@ -190,14 +191,14 @@ void Viewer::paintGL() {
   enablePerlinShader();
 
   enableNormalShader();
-  
-  // clear the color and depth buffers 
+
+  // clear the color and depth buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  enableThridShader();
-  
+  enableThirdShader();
 
-  // tell the GPU to stop using this shader 
+
+  // tell the GPU to stop using this shader
   disableShader();
 }
 
@@ -208,7 +209,7 @@ void Viewer::resizeGL(int width,int height) {
 }
 
 void Viewer::createFBO() {
-  // Ids needed for the FBO and associated textures 
+  // Ids needed for the FBO and associated textures
   glGenFramebuffers(1,&_fbo);
   glGenTextures(1,&_noisePerlinId);
   glGenTextures(1,&_normalId);
@@ -216,11 +217,11 @@ void Viewer::createFBO() {
 
 void Viewer::initFBO() {
 
-  // create the texture for rendering normals 
+  // create the texture for rendering normals
   glBindTexture(GL_TEXTURE_2D,_noisePerlinId);
   glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,800,800,0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -228,11 +229,11 @@ void Viewer::initFBO() {
   glBindTexture(GL_TEXTURE_2D,_normalId);
   glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA32F,800,800,0,GL_RGBA,GL_FLOAT,NULL);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); 
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    // attach textures to framebuffer object 
+    // attach textures to framebuffer object
   glBindFramebuffer(GL_FRAMEBUFFER,_fbo);
 
   glBindTexture(GL_TEXTURE_2D,_noisePerlinId);
@@ -251,7 +252,29 @@ void Viewer::deleteFBO() {
   glDeleteTextures(1,&_normalId);
 }
 
+void Viewer::loadTexture(GLuint id,const char *filename) {
+    // load image
+    QImage image = QGLWidget::convertToGLFormat(QImage(filename));
+
+    // activate texture
+    glBindTexture(GL_TEXTURE_2D,id);
+
+    // set texture parameters
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
+
+    // store texture in the GPU
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
+           GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
+
+    // generate mipmaps
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+
 void Viewer::createTextures(){
+
 
     glGenTextures(1,&_snowTextu);
     loadTexture(_snowTextu, "textures/snow.jpg");
@@ -264,31 +287,8 @@ void Viewer::createTextures(){
     loadTexture(_grassTextu, "textures/grass.jpg");
 }
 
-void Viewer::loadTexture(GLuint id,const char *filename) {
-    // load image (CPU side)
-    QImage image = QGLWidget::convertToGLFormat(QImage(filename));
-
-    // activate texture 
-    glBindTexture(GL_TEXTURE_2D,id);
-
-    // set texture parameters 
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR); 
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_MIRRORED_REPEAT);
-
-    // transfer data from CPU to GPU memory
-    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,image.width(),image.height(),0,
-           GL_RGBA,GL_UNSIGNED_BYTE,(const GLvoid *)image.bits());
-
-    // generate mipmaps 
-    glGenerateMipmap(GL_TEXTURE_2D);
-}
-
 void Viewer::deleteTextures(){
-    glDeleteTextures(1,&_snowTextu);
     glDeleteTextures(1,&_montagneTextu);
-    glDeleteTextures(1,&_grassTextu);
 }
 
 void Viewer::mousePressEvent(QMouseEvent *me) {
@@ -306,14 +306,14 @@ void Viewer::mousePressEvent(QMouseEvent *me) {
     _light[2] = 1.0f-std::max(fabs(_light[0]),fabs(_light[1]));
     _light = glm::normalize(_light);
     _mode = true;
-  } 
+  }
 
   updateGL();
 }
 
 void Viewer::mouseMoveEvent(QMouseEvent *me) {
   const glm::vec2 p((float)me->x(),(float)(height()-me->y()));
-  
+
   if(_mode) {
     // light mode
     _light[0] = (p[0]-(float)(width()/2))/((float)(width()/2));
@@ -324,18 +324,18 @@ void Viewer::mouseMoveEvent(QMouseEvent *me) {
     // camera mode
     _cam->move(p);
   }
-  
+
   updateGL();
 }
 
 
 void Viewer::keyPressEvent(QKeyEvent *ke) {
-  
+
   // key a: play/stop animation
   if(ke->key()==Qt::Key_A) {
-    if(_timer->isActive()) 
+    if(_timer->isActive())
       _timer->stop();
-    else 
+    else
       _timer->start();
   }
 
@@ -343,7 +343,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
   if(ke->key()==Qt::Key_I) {
     _cam->initialize(width(),height(),true);
   }
-  
+
   // key f: compute FPS
   if(ke->key()==Qt::Key_F) {
     int elapsed;
@@ -358,7 +358,7 @@ void Viewer::keyPressEvent(QKeyEvent *ke) {
     cout << "FPS : " << t*1000.0 << endl;
   }
 
-  // key r: reload shaders 
+  // key r: reload shaders
   if(ke->key()==Qt::Key_R) {
     for(unsigned int i=0;i<_vertexFilenames.size();++i) {
       _shaders[i]->reload(_vertexFilenames[i].c_str(),_fragmentFilenames[i].c_str());
@@ -403,7 +403,7 @@ void Viewer::initializeGL() {
     _shaders[i]->load(_vertexFilenames[i].c_str(),_fragmentFilenames[i].c_str());
   }
 
-  // VAO creation 
+  // VAO creation
   createVAO();
   createTextures();
 
@@ -411,7 +411,7 @@ void Viewer::initializeGL() {
   createFBO();
   initFBO();
 
-  // starts the timer 
+  // starts the timer
   _timer->start();
 }
 

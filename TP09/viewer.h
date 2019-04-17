@@ -2,9 +2,9 @@
 #define VIEWER_H
 
 // GLEW lib: needs to be included first!!
-#include <GL/glew.h> 
+#include <GL/glew.h>
 
-// OpenGL library 
+// OpenGL library
 #include <GL/gl.h>
 
 // OpenGL Utility library
@@ -29,7 +29,7 @@ class Viewer : public QGLWidget {
  public:
   Viewer(const QGLFormat &format=QGLFormat::defaultFormat());
   ~Viewer();
-  
+
  protected :
   virtual void paintGL();
   virtual void initializeGL();
@@ -47,7 +47,7 @@ class Viewer : public QGLWidget {
   void enableShader(unsigned int shader=0);
   void enablePerlinShader();
   void enableNormalShader();
-  void enableThridShader();
+  void enableThirdShader();
   void disableShader();
 
   void createFBO();
@@ -68,7 +68,7 @@ class Viewer : public QGLWidget {
 
   std::vector<std::string> _vertexFilenames;   // all vertex filenames
   std::vector<std::string> _fragmentFilenames; // all fragment filenames
-  std::vector<Shader *>    _shaders;           // all the shaders 
+  std::vector<Shader *>    _shaders;           // all the shaders
 
   //GLuint _vao;
   GLuint _buffers[1];
@@ -80,8 +80,8 @@ class Viewer : public QGLWidget {
   GLuint _snowTextu;
   GLuint _montagneTextu;
   GLuint _grassTextu;
-  
-  // render texture ids 
+
+  // render texture ids
   GLuint _noisePerlinId;
   GLuint _normalId;
   // fbo id
